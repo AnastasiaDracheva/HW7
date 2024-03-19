@@ -2,10 +2,14 @@ package api;
 
 import com.google.gson.Gson;
 import dto.OrderDtoMocked;
+import dto.OrderDtoMockedBuilderAndFactory;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -167,6 +171,7 @@ public class RestApiMoced {
     }
     @Test
     public void createOrderAndCheckResponseCodeIsOk(){
+
         OrderDtoMocked orderDtoMocked = new OrderDtoMocked();
 
 
@@ -193,38 +198,49 @@ public class RestApiMoced {
 
 
     }
-    @ParameterizedTest
-    @ValueSource(ints = {1, 5, 9, 10})
-    public void createOrdersWithParametersCheckResponseCodeOk(int orderId){
+    @Test
+    public void createOrdersWithParametersCheckResponseCode() {
+OrderDtoMockedBuilderAndFactory orderDtoMockedBuilderAndFactory = OrderDtoMockedBuilderAndFactory.createRandomOrder();
 
+            given()
+                    .header("api_key", "1234567890123456")
+                    .header("Content-Type", "application/json")
+                    .header("apy_key", RandomDataGenerator.generateValidApiKay())
+                    .body(new Gson().toJson(orderDtoMockedBuilderAndFactory))
+                    .log()
+                    .all()
+                    .when()
+                    .put("/test-orders/ ")
+                    .then()
+                    .log()
+                    .all()
+                    .statusCode(405);
 
-        OrderDtoMocked orderDtoMocked = new OrderDtoMocked();
+            }
 
+            @Test
+    public void createOrderWithBuilderAndCheckResponseCodeIsOk(){
+        OrderDtoMockedBuilderAndFactory orderDtoMocked = OrderDtoMockedBuilderAndFactory.createRandomOrder();
 
-        orderDtoMocked.setStatus("OPEN");
-        orderDtoMocked.setCourierId(RandomNum.generateId());
-        orderDtoMocked.setCustomerName(RandomDataGenerator.generateName());
-        orderDtoMocked.setCustomerPhone(RandomDataGenerator.generateRandomPhone());
-        orderDtoMocked.setComment(RandomDataGenerator.generateComment());
-        orderDtoMocked.setId(RandomNum.generateId());
+        Gson gson = new Gson();
 
-
-        given()
-                .header("api_key","1234567890123456")
-                .header("Content-Type","application/json")
+        Response response = given()
+                .contentType(ContentType.JSON)
                 .log()
                 .all()
+                .when()
                 .body(new Gson().toJson(orderDtoMocked))
-                .put("/test-orders/1")
+                .post("/test-orders")
                 .then()
                 .log()
                 .all()
-                .statusCode(HttpStatus.SC_OK);
+                .extract()
+                .response();
+        // deserialization
 
-
-    }
-
+                OrderDtoMocked orderReceived = gson.fromJson(response.asString(),OrderDtoMocked.class);
+                Assertions.assertEquals("OPEN",orderReceived.getStatus());
+                Assertions.assertEquals(orderDtoMocked.getCustomerName(), orderReceived.getCustomerName());
+            }
 
 }
-
-

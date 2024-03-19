@@ -35,5 +35,13 @@ public class RandomDataGenerator {
         return generatedPhoneNumbers.toString();
 
     }
+    public static String generateValidApiKay() {
+        int lenght = 7;
+        boolean useLetters = false;
+        boolean useNumbers = true;
+        String generateValidApiKay = RandomStringUtils.random(lenght, useLetters, useNumbers);
+
+        return generateValidApiKay;
+    }
 
 }
